@@ -3,6 +3,8 @@
 Thin, translucent scrollbars for the whole page, including every shadow root:
 open, closed, present, and attached later.
 
+<img width="1736" height="1113" alt="image" src="https://github.com/user-attachments/assets/7666878d-a073-42c7-8f67-fdc6ca83dd1c" />
+
 Useful when plain CSS cannot reach the scrollbars because they live inside
 shadow DOM:
 
