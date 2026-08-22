@@ -1,7 +1,6 @@
 # thin-scrollbars-everywhere
 
-Thin, translucent scrollbars for the whole page, including every shadow root:
-open, closed, present, and attached later.
+Thin, translucent scrollbars for the whole page, including every shadow root.
 
 <img width="1736" height="1113" alt="image" src="https://github.com/user-attachments/assets/7666878d-a073-42c7-8f67-fdc6ca83dd1c" />
 
@@ -26,8 +25,8 @@ One call is enough. It keeps watching the page and styles new shadow roots as
 they appear. Call it as early as possible, before any shadow DOM is created.
 Closed shadow roots that already exist at call time cannot be reached.
 
-This does not reach into `iframe`, `object`, or `embed` content. Those are
-whole separate pages with their own `window`, so each needs its own call.
+This does not reach into `iframe`, `object`, or `embed` content. Those are whole
+separate pages with their own `window`, so each needs its own call.
 
 ## How it works
 
