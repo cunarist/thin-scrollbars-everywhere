@@ -26,6 +26,9 @@ One call is enough. It keeps watching the page and styles new shadow roots as
 they appear. Call it as early as possible, before any shadow DOM is created.
 Closed shadow roots that already exist at call time cannot be reached.
 
+This does not reach into `iframe`, `object`, or `embed` content. Those are
+whole separate pages with their own `window`, so each needs its own call.
+
 ## How it works
 
 A shared constructable stylesheet sets `scrollbar-width: thin` and a

@@ -31,8 +31,8 @@ function getScrollbarStyle(): CSSStyleSheet {
 const observedRoots = new WeakSet<Document | ShadowRoot>();
 
 /**
- * Whether applyThinScrollbarsEverywhere has run, making repeat calls no-ops
- * so Element.prototype.attachShadow is only patched once.
+ * Whether applyThinScrollbarsEverywhere has run, making repeat calls
+ * no-ops so Element.prototype.attachShadow is only patched once.
  */
 let installed = false;
 
@@ -76,10 +76,12 @@ function patchRoot(root: Document | ShadowRoot): void {
 }
 
 /**
- * Applies thin, translucent scrollbars to the document and to every shadow
- * root, and keeps watching so roots attached later are styled too. Closed
- * shadow roots that already exist at call time cannot be reached, so call
- * this as early as possible. Calling it more than once has no further effect.
+ * Applies thin, translucent scrollbars to the document and to every
+ * shadow root in the same realm, and keeps watching so roots attached
+ * later are styled too. Closed shadow roots that already exist at call
+ * time cannot be reached, so call this as early as possible. An iframe
+ * is a separate page with its own realm; call this inside it. Calling
+ * it more than once has no further effect.
  */
 export function applyThinScrollbarsEverywhere(): void {
   if (installed) {
