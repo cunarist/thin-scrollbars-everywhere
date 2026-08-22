@@ -2,30 +2,122 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>thin-scrollbars-everywhere example</title>
     <style>
+    :root {
+      --bg: #f6f7f9;
+      --card: #ffffff;
+      --ink: #1b1f24;
+      --muted: #6b7280;
+      --line: #e3e6ea;
+      --accent: #4f6bed;
+      --radius: 14px;
+      --shadow: 0 1px 2px rgb(16 24 40 / 6%), 0 8px 24px rgb(16 24 40 / 6%);
+      color-scheme: light;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #14161a;
+        --card: #1c1f25;
+        --ink: #e8eaed;
+        --muted: #9aa2ad;
+        --line: #2c3139;
+        --accent: #8fa3ff;
+        --shadow: 0 1px 2px rgb(0 0 0 / 40%), 0 8px 24px rgb(0 0 0 / 30%);
+        color-scheme: dark;
+      }
+    }
+    * {
+      box-sizing: border-box;
+    }
+    /* The page scrollbar takes currentColor from <html>, not <body>. */
+    html {
+      color: var(--ink);
+      background: var(--bg);
+    }
     body {
-      font-family: sans-serif;
+      margin: 0;
+      padding: 40px 24px 64px;
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+        sans-serif;
+      line-height: 1.5;
+    }
+    header {
+      max-width: 960px;
+      margin: 0 auto 28px;
+    }
+    h1 {
+      margin: 0 0 6px;
+      font-size: 22px;
+      font-weight: 650;
+      letter-spacing: -0.01em;
+    }
+    header p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+    main {
+      max-width: 960px;
+      margin: 0 auto;
       display: flex;
       flex-wrap: wrap;
-      gap: 16px;
-      padding: 16px;
+      gap: 20px;
     }
     .box {
       overflow: auto;
-      border: 1px solid #888;
-      padding: 8px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--card);
+      box-shadow: var(--shadow);
+    }
+    .box > p:first-child,
+    .wide > p:first-child {
+      margin: 0 0 10px;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--muted);
     }
     .filler {
       width: 150%;
       height: 400px;
-      background: linear-gradient(135deg, #cde, #edc);
+      border-radius: 10px;
+      background: linear-gradient(135deg, #cdd8f5, #f5dfcd);
+    }
+    .wide {
+      width: 100%;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--card);
+      box-shadow: var(--shadow);
     }
     </style>
     <script type="module">
     import { applyThinScrollbarsEverywhere } from "../mod.ts";
 
     applyThinScrollbarsEverywhere();
+
+    const innerStyle = `
+      p {
+        margin: 0 0 10px;
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: #6b7280;
+        font-family: ui-sans-serif, system-ui, sans-serif;
+      }
+      .scroller {
+        overflow: auto;
+        border: 1px solid rgb(128 128 128 / 30%);
+        border-radius: 10px;
+      }
+    `;
 
     // Open and closed shadow roots created after the call.
     for (const mode of ["open", "closed"]) {
@@ -35,14 +127,14 @@
       host.style.height = "160px";
       const root = host.attachShadow({ mode });
       root.innerHTML = `
+        <style>${innerStyle}</style>
         <p>${mode} shadow root</p>
-        <div style="overflow: auto; width: 180px; height: 90px;
-          border: 1px solid #888;">
-          <div style="width: 400px; height: 300px;
+        <div class="scroller" style="width: 180px; height: 90px;">
+          <div style="width: 400px; height: 300px; border-radius: 8px;
             background: linear-gradient(135deg, #dce8ff, #ffe8dc);"></div>
         </div>
       `;
-      document.body.append(host);
+      document.querySelector("main").append(host);
     }
 
     // A shadow root attached one second later, to show the observer.
@@ -53,44 +145,56 @@
       host.style.height = "160px";
       const root = host.attachShadow({ mode: "open" });
       root.innerHTML = `
+        <style>${innerStyle}</style>
         <p>late shadow root</p>
-        <div style="overflow: auto; height: 90px;">
-          <div style="height: 300px; background: #dfd;"></div>
+        <div class="scroller" style="height: 90px;">
+          <div style="height: 300px; border-radius: 8px;
+            background: linear-gradient(135deg, #d8f5df, #cdeff5);"></div>
         </div>
       `;
-      document.body.append(host);
+      document.querySelector("main").append(host);
     }, 1000);
     </script>
   </head>
   <body>
-    <div class="box" style="width: 300px; height: 200px">
-      <p>Plain scrollable div</p>
-      <div class="filler"></div>
-    </div>
-    <div class="box" style="width: 160px; height: 320px; background: #fdc">
-      <p>Tall narrow div (colored background)</p>
-      <div class="filler"></div>
-    </div>
-    <div class="box" style="width: 400px; height: 120px">
-      <p>Short wide div</p>
-      <div class="filler"></div>
-    </div>
-    <div class="box" style="width: 240px; height: 180px">
-      <p>Declarative shadow root</p>
-      <div>
-        <template shadowrootmode="open">
-          <div
-            style="overflow: auto; height: 90px; border: 1px solid #888;
-              background: #ddf"
-          >
-            <div style="height: 300px"></div>
-          </div>
-        </template>
+    <header>
+      <h1>thin-scrollbars-everywhere</h1>
+      <p>
+        Every scrollable area below uses thin, translucent scrollbars — the page
+        itself, plain divs, and open, closed, late, and declarative shadow roots.
+      </p>
+    </header>
+    <main>
+      <div class="box" style="width: 300px; height: 200px">
+        <p>Plain scrollable div</p>
+        <div class="filler"></div>
       </div>
-    </div>
-    <div style="width: 100%">
-      <p>Body-level content, long enough to make the page itself scroll.</p>
-      <div class="filler" style="width: 120vw; height: 150vh"></div>
-    </div>
+      <div class="box" style="width: 160px; height: 320px">
+        <p>Tall narrow div</p>
+        <div class="filler"></div>
+      </div>
+      <div class="box" style="width: 400px; height: 120px">
+        <p>Short wide div</p>
+        <div class="filler"></div>
+      </div>
+      <div class="box" style="width: 240px; height: 180px">
+        <p>Declarative shadow root</p>
+        <div>
+          <template shadowrootmode="open">
+            <div
+              style="overflow: auto; height: 90px; border-radius: 10px;
+                border: 1px solid rgb(128 128 128 / 30%);
+                background: linear-gradient(135deg, #dfe4ff, #eef1ff)"
+            >
+              <div style="height: 300px"></div>
+            </div>
+          </template>
+        </div>
+      </div>
+      <div class="wide">
+        <p>Body-level content — long enough to scroll the page itself</p>
+        <div class="filler" style="width: 120vw; height: 150vh"></div>
+      </div>
+    </main>
   </body>
 </html>
