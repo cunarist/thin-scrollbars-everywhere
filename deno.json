@@ -1,0 +1,48 @@
+{
+  "tasks": {
+    "build": "deno run -A scripts/build-npm.ts",
+    "example": "deno run -A npm:vite@7 --open /example/",
+    "import-check": "deno run -A @cunarist/deno-import-check mod.ts"
+  },
+  "exclude": ["npm"],
+  "compilerOptions": {
+    "strict": true,
+    "lib": ["deno.ns", "es2022", "dom", "dom.iterable"],
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "allowUnreachableCode": false,
+    "allowUnusedLabels": false,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitOverride": true,
+    "noImplicitReturns": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "noUncheckedIndexedAccess": true
+  },
+  "lint": {
+    "plugins": ["./scripts/deno-lint-plugin.ts"],
+    "rules": {
+      "tags": ["recommended"],
+      "exclude": ["no-explicit-any"],
+      "include": [
+        "eqeqeq",
+        "camelcase",
+        "guard-for-in",
+        "no-console",
+        "no-const-assign",
+        "no-eval",
+        "no-external-import",
+        "no-non-null-asserted-optional-chain",
+        "no-non-null-assertion",
+        "no-throw-literal",
+        "prefer-ascii",
+        "verbatim-module-syntax"
+      ]
+    }
+  },
+  "imports": {
+    "@cunarist/deno-import-check": "jsr:@cunarist/deno-import-check@0.9.0",
+    "@cunarist/deno-lint-plugin-explicit-types": "jsr:@cunarist/deno-lint-plugin-explicit-types@0.5.1",
+    "@deno/dnt": "jsr:@deno/dnt@^0.43.2",
+    "@hugoalh/deno-lint-rules": "jsr:@hugoalh/deno-lint-rules@0.18.2"
+  }
+}
