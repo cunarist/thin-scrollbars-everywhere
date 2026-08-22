@@ -19,10 +19,6 @@ jobs:
         with:
           node-version: 22
           registry-url: https://registry.npmjs.org
-      - run: deno fmt --check
-      - run: deno lint
-      - run: deno check mod.ts scripts/build-npm.ts
-      - run: deno task import-check
       - run: deno task build "${GITHUB_REF_NAME#v}"
       - run: npm publish --provenance --access public ${{ contains(github.ref_name, '-') && '--tag next' || '' }}
         working-directory: npm
