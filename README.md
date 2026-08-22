@@ -1,5 +1,8 @@
 # thin-scrollbars-everywhere
 
+[![npm](https://img.shields.io/npm/v/thin-scrollbars-everywhere)](https://www.npmjs.com/package/thin-scrollbars-everywhere)
+[![bundle size](https://img.shields.io/bundlejs/size/thin-scrollbars-everywhere)](https://bundlejs.com/?q=thin-scrollbars-everywhere)
+
 Thin, translucent scrollbars for the whole page, including every shadow root.
 
 ![Example page](https://github.com/user-attachments/assets/7666878d-a073-42c7-8f67-fdc6ca83dd1c)
