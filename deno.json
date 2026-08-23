@@ -2,7 +2,7 @@
   "tasks": {
     "build": "deno run -A scripts/build-npm.ts",
     "example": "deno run -A npm:vite@7 --open /example/",
-    "import-check": "deno run -A @cunarist/deno-import-check mod.ts"
+    "import-check": "deno run -A @cunarist/deno-import-check src/mod.ts"
   },
   "exclude": ["npm"],
   "compilerOptions": {
