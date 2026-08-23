@@ -17,10 +17,8 @@ jobs:
           deno-version: v2.x
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
           registry-url: https://registry.npmjs.org
       - run: deno task build "${GITHUB_REF_NAME#v}"
       - run: npm publish --provenance --access public ${{ contains(github.ref_name, '-') && '--tag next' || '' }}
         working-directory: npm
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
