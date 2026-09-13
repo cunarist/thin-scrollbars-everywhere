@@ -1,100 +1,205 @@
 /**
- * The single stylesheet shared by the document and all shadow roots.
- * Created lazily so importing this module does not touch DOM APIs,
- * which keeps the import safe in non-browser environments like SSR.
+ * What every root is given: thin bars drawn in a washed-out `currentColor`,
+ * over no track at all, so the bar takes the color of whatever it sits on.
  */
-let scrollbarStyle: CSSStyleSheet | null = null;
-
-/**
- * Returns the shared stylesheet, creating it on first use.
- * One constructable sheet can be adopted by any number of roots,
- * so every root reuses this instance instead of getting a copy.
- */
-function getScrollbarStyle(): CSSStyleSheet {
-  if (scrollbarStyle === null) {
-    scrollbarStyle = new CSSStyleSheet();
-    scrollbarStyle.replaceSync(`
-      * {
-        scrollbar-color: color-mix(in srgb, currentColor 25%, #0000) #0000;
-        scrollbar-width: thin;
-      }
-    `);
+const SCROLLBAR_RULE = `
+  * {
+    scrollbar-color: color-mix(in srgb, currentColor 25%, #0000) #0000;
+    scrollbar-width: thin;
   }
-  return scrollbarStyle;
-}
+`;
 
 /**
- * Roots that already have a MutationObserver attached, so patchRoot
- * does not stack a second observer on the same root. A WeakSet lets
- * discarded roots be garbage collected along with their observers.
+ * The tags that can hold a whole page of their own, used as a cheap first
+ * question before the element is asked for the page itself.
+ */
+const FRAME_TAGS = new Set(["iframe", "frame", "object", "embed"]);
+
+/**
+ * The sheet each document lends to its own roots.
+ * A constructable sheet belongs to the document that built it, and any
+ * other document refuses to adopt it, so a framed page is given a sheet
+ * of its own rather than a share of this page's.
+ */
+const documentSheets = new WeakMap<Document, CSSStyleSheet>();
+
+/**
+ * Documents whose realm has had its `attachShadow` patched.
+ * Keyed by document, not by window: navigating a frame hands back the
+ * same `contentWindow` while replacing everything behind it, so a window
+ * that was patched once would look patched forever.
+ */
+const patchedDocuments = new WeakSet<Document>();
+
+/**
+ * Roots that are already watched, so a second observer is never stacked
+ * on one root. A weak set lets a discarded root take its observer with it.
  */
 const observedRoots = new WeakSet<Document | ShadowRoot>();
 
-/**
- * Whether applyThinScrollbarsEverywhere has run, making repeat calls
- * no-ops so Element.prototype.attachShadow is only patched once.
- */
-let installed = false;
+/** Frame elements already waited on, so one `load` listener is enough. */
+const watchedFrames = new WeakSet<Element>();
 
 /**
- * Walks a subtree and patches every open shadow root found in it.
- * Needed for roots that already existed before this module could
- * see them being attached, such as declarative shadow DOM.
+ * The page a framed element holds, or null when it is out of reach.
+ * A cross-origin page answers `null`, and older engines throw where newer
+ * ones answer, so a refusal of either shape is read the same way. An
+ * `embed` offers only `getSVGDocument`, which reaches an SVG page alone.
+ *
+ * Every test runs against the element's own realm, because an `iframe`
+ * inside a framed page is not this realm's `HTMLIFrameElement` and would
+ * fail an `instanceof` asked from here.
  */
-function patchShadowRoots(node: Node): void {
-  if (node instanceof Element && node.shadowRoot !== null) {
-    patchRoot(node.shadowRoot);
+function framedDocumentOf(element: Element): Document | null {
+  const view = element.ownerDocument.defaultView;
+  if (view === null) {
+    return null;
+  }
+  try {
+    if (element instanceof view.HTMLIFrameElement) {
+      return element.contentDocument;
+    }
+    if (element instanceof view.HTMLObjectElement) {
+      return element.contentDocument;
+    }
+    if (element instanceof view.HTMLFrameElement) {
+      return element.contentDocument;
+    }
+    if (element instanceof view.HTMLEmbedElement) {
+      return element.getSVGDocument();
+    }
+  } catch {
+    return null;
+  }
+  return null;
+}
+
+/**
+ * The sheet for a document, built on first use from that document's own
+ * `CSSStyleSheet`. A document torn out of its window can no longer build
+ * one, and is left alone.
+ */
+function sheetFor(owner: Document): CSSStyleSheet | null {
+  const existing = documentSheets.get(owner);
+  if (existing !== undefined) {
+    return existing;
+  }
+  const view = owner.defaultView;
+  if (view === null) {
+    return null;
+  }
+  const sheet = new view.CSSStyleSheet();
+  sheet.replaceSync(SCROLLBAR_RULE);
+  documentSheets.set(owner, sheet);
+  return sheet;
+}
+
+/**
+ * Styles a frame's page now, and again each time it loads another.
+ * Navigation throws away the document that was styled and builds a fresh
+ * one, which remembers nothing of what the old one was given.
+ */
+function watchFrame(element: Element): void {
+  const framed = framedDocumentOf(element);
+  if (framed !== null) {
+    patchPage(framed);
+  }
+  if (watchedFrames.has(element)) {
+    return;
+  }
+  watchedFrames.add(element);
+  element.addEventListener("load", () => {
+    const loaded = framedDocumentOf(element);
+    if (loaded !== null) {
+      patchPage(loaded);
+    }
+  });
+}
+
+/**
+ * Walks a subtree, styling every shadow root and framed page under it.
+ * Roots that existed before this module could watch them being attached,
+ * declarative shadow DOM above all, are only ever found this way. The
+ * owner is carried along so nodes are tested against their own realm.
+ */
+function patchDescendants(node: Node, owner: Document): void {
+  const view = owner.defaultView;
+  if (view !== null && node instanceof view.Element) {
+    if (node.shadowRoot !== null) {
+      patchRoot(node.shadowRoot, owner);
+    }
+    if (FRAME_TAGS.has(node.localName)) {
+      watchFrame(node);
+    }
   }
   for (const child of node.childNodes) {
-    patchShadowRoots(child);
+    patchDescendants(child, owner);
   }
 }
 
 /**
- * Adopts the stylesheet into a root and starts observing it so new
- * descendants get scanned for shadow roots and the sheet is restored
- * if some other code overwrites adoptedStyleSheets later.
+ * Adopts the sheet into a root and watches it from then on, so anything
+ * grown later is styled and the sheet returns if other code drops it.
  */
-function patchRoot(root: Document | ShadowRoot): void {
-  const sheet = getScrollbarStyle();
-  if (!root.adoptedStyleSheets.includes(sheet)) {
+function patchRoot(root: Document | ShadowRoot, owner: Document): void {
+  const sheet = sheetFor(owner);
+  if (sheet !== null && !root.adoptedStyleSheets.includes(sheet)) {
     root.adoptedStyleSheets = [...root.adoptedStyleSheets, sheet];
   }
   if (observedRoots.has(root)) {
     return;
   }
   observedRoots.add(root);
-  new MutationObserver((records) => {
-    patchRoot(root);
-    for (const record of records) {
-      for (const node of record.addedNodes) {
-        patchShadowRoots(node);
+  const view = owner.defaultView;
+  if (view !== null) {
+    const observer = new view.MutationObserver((records) => {
+      patchRoot(root, owner);
+      for (const record of records) {
+        for (const node of record.addedNodes) {
+          patchDescendants(node, owner);
+        }
       }
-    }
-  }).observe(root, { childList: true, subtree: true });
-  patchShadowRoots(root);
+    });
+    observer.observe(root, { childList: true, subtree: true });
+  }
+  patchDescendants(root, owner);
 }
 
 /**
- * Applies thin, translucent scrollbars to the document and to every
- * shadow root in the same realm, and keeps watching so roots attached
- * later are styled too. Closed shadow roots that already exist at call
- * time cannot be reached, so call this as early as possible. An iframe
- * is a separate page with its own realm; call this inside it. Calling
- * it more than once has no further effect.
+ * Styles a whole page: its document, its roots, and the roots it grows
+ * from here on. Every page patches its own `attachShadow`, because a
+ * realm's `Element.prototype` is its own and the patch made in one page
+ * is invisible from every other.
+ */
+function patchPage(target: Document): void {
+  if (!patchedDocuments.has(target)) {
+    patchedDocuments.add(target);
+    const view = target.defaultView;
+    if (view !== null) {
+      const prototype = view.Element.prototype;
+      const attachShadow = prototype.attachShadow;
+      prototype.attachShadow = function (init: ShadowRootInit): ShadowRoot {
+        const root = attachShadow.call(this, init);
+        patchRoot(root, this.ownerDocument);
+        return root;
+      };
+    }
+  }
+  patchRoot(target, target);
+}
+
+/**
+ * Applies thin, translucent scrollbars to this page, to every shadow root
+ * in it, and to every `iframe`, `frame`, `object`, and `embed` page it is
+ * allowed to open, as deeply as those nest. It keeps watching, so a root
+ * attached or a page loaded later is styled as it arrives.
+ *
+ * Call it as early as possible: a closed shadow root that already exists
+ * cannot be reached. A page the browser walls off, meaning a cross-origin
+ * one or a frame sandboxed without `allow-same-origin`, cannot be reached
+ * at all and keeps the platform's own scrollbars; run this inside such a
+ * page to style it. Calling it more than once has no further effect.
  */
 export function applyThinScrollbarsEverywhere(): void {
-  if (installed) {
-    return;
-  }
-  installed = true;
-  const attachShadow = Element.prototype.attachShadow;
-  Element.prototype.attachShadow = function (
-    init: ShadowRootInit,
-  ): ShadowRoot {
-    const root = attachShadow.call(this, init);
-    patchRoot(root);
-    return root;
-  };
-  patchRoot(document);
+  patchPage(document);
 }

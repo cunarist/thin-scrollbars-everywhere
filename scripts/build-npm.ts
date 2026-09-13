@@ -23,7 +23,7 @@ await build({
     name: "thin-scrollbars-everywhere",
     version,
     description:
-      "Thin, translucent scrollbars for the document and every shadow root.",
+      "Thin, translucent scrollbars for the document, every shadow root, and every framed page.",
     license: "MIT",
     repository: {
       type: "git",
