@@ -1,7 +1,4 @@
-/**
- * What every root is given: thin bars drawn in a washed-out `currentColor`,
- * over no track at all, so the bar takes the color of whatever it sits on.
- */
+/** Thin bars in a washed-out `currentColor`, over no track at all. */
 const SCROLLBAR_RULE = `
   * {
     scrollbar-color: color-mix(in srgb, currentColor 25%, #0000) #0000;
@@ -9,14 +6,13 @@ const SCROLLBAR_RULE = `
   }
 `;
 
-/**
- * The tags that can hold a whole page of their own, used as a cheap first
- * question before the element is asked for the page itself.
- */
+/** The tags that can hold a page of their own. */
 const FRAME_TAGS = new Set(["iframe", "frame", "object", "embed"]);
 
 /**
- * The sheet each document lends to its own roots.
+ * The sheet each document lends to its own roots, built on first use so
+ * that importing this module never touches a DOM API, which keeps the
+ * import safe where there is no DOM at all.
  * A constructable sheet belongs to the document that built it, and any
  * other document refuses to adopt it, so a framed page is given a sheet
  * of its own rather than a share of this page's.
@@ -56,13 +52,11 @@ function framedDocumentOf(element: Element): Document | null {
     return null;
   }
   try {
-    if (element instanceof view.HTMLIFrameElement) {
-      return element.contentDocument;
-    }
-    if (element instanceof view.HTMLObjectElement) {
-      return element.contentDocument;
-    }
-    if (element instanceof view.HTMLFrameElement) {
+    if (
+      element instanceof view.HTMLIFrameElement ||
+      element instanceof view.HTMLObjectElement ||
+      element instanceof view.HTMLFrameElement
+    ) {
       return element.contentDocument;
     }
     if (element instanceof view.HTMLEmbedElement) {
@@ -94,26 +88,26 @@ function sheetFor(owner: Document): CSSStyleSheet | null {
   return sheet;
 }
 
+/** Styles the page a framed element holds, when it holds one in reach. */
+function patchFramedPage(element: Element): void {
+  const framed = framedDocumentOf(element);
+  if (framed !== null) {
+    patchPage(framed);
+  }
+}
+
 /**
  * Styles a frame's page now, and again each time it loads another.
  * Navigation throws away the document that was styled and builds a fresh
  * one, which remembers nothing of what the old one was given.
  */
 function watchFrame(element: Element): void {
-  const framed = framedDocumentOf(element);
-  if (framed !== null) {
-    patchPage(framed);
-  }
+  patchFramedPage(element);
   if (watchedFrames.has(element)) {
     return;
   }
   watchedFrames.add(element);
-  element.addEventListener("load", () => {
-    const loaded = framedDocumentOf(element);
-    if (loaded !== null) {
-      patchPage(loaded);
-    }
-  });
+  element.addEventListener("load", () => patchFramedPage(element));
 }
 
 /**
