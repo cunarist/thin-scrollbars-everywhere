@@ -1,0 +1,56 @@
+---
+description: Node.js 22.18+ with Vite+ (vp) and npm; only package.json, tsconfig.json, vite.config.ts plus a committed package-lock.json
+---
+
+## The stack
+
+- **Runtime:** Node.js 22.18 or newer. `engines` is `{ "node": ">=22.18" }` and
+  nothing else. The publish job uses Node 24 (LTS).
+- **Bun is not supported** (dropped 2026-10-15). No Bun CI legs, docs, or
+  runtime branches; `vp` brings its own Node, the way uv brings its own
+  Python. The package itself runs in browsers; Node only runs the tooling.
+- **Toolchain:** Vite+ (`vite-plus` devDependency, command `vp`): Vite,
+  Vitest, Oxlint, Oxfmt, type checking, tsdown.
+- **Package manager:** npm everywhere. `package-lock.json` is committed,
+  libraries included (user agreed 2026-10-14: `npm ci` needs it). There is no
+  `packageManager` field; Vite+ detects npm from the lockfile.
+
+## Config files
+
+Exactly three, plus the lockfile: `package.json`, `tsconfig.json`,
+`vite.config.ts`. No `.oxlintrc.json`, `.prettierrc`, `eslint.config.*`,
+`vitest.config.*`, `.npmrc`, or `tsdown.config.*`. Tool options go into
+`vite.config.ts` keys (`lint`, `fmt`, `test`, `pack`).
+The target is a short `vite.config.ts`, around 30 lines (not strict).
+
+## Commands
+
+| Command                  | Does                                                       |
+| ------------------------ | ---------------------------------------------------------- |
+| `vp check`               | format check, Oxlint (type-aware), and type check together |
+| `vp check --fix`         | the same, applying formatting and safe fixes               |
+| `vp test`                | Vitest; `vp test tests` runs only the top-level `tests/`   |
+| `vp pack`                | tsdown build into `dist/`: ESM, CommonJS, declarations     |
+| `npm ci` / `npm install` | install; never another package manager                     |
+
+`vp check`, `vp test`, and `vp pack` must all pass
+before any push. CI installs the toolchain with `voidzero-dev/setup-vp`.
+
+## Gotchas
+
+- `vp check` does **not** report `isolatedDeclarations` errors (TS9010); only
+  `vp pack` does, so packages run `vp pack` in CI on every PR. Like Deno's
+  `no-slow-types`, it accepts a trivially inferable export
+  (`export const o = { a: 1 }`) and rejects `export const x = make()`.
+- Oxfmt sorts `package.json` keys by default; that order is accepted
+  ([[package-json-shape]]).
+- Oxlint and Oxfmt skip what `.gitignore` lists; that is the only reason
+  `dist/` and `node_modules/` are not linted. Keep build output gitignored.
+- Vite+ bundles `vite.config.ts` itself and resolves `#` imports in it.
+- Oxlint loads a `.ts` plugin file directly on Node 24 (`jsPlugins`), so
+  repo-local lint plugins need no build step.
+- `tsconfig.json` includes only `src/` with browser `lib` (`es2022`, `dom`,
+  `dom.iterable`) and no `types`. `scripts/` and `vite.config.ts` fall into an
+  inferred program with an older default lib, so a script that needs newer
+  built-ins (`Map.groupBy`, `toSorted`) adds `/// <reference lib="es2024" />`.
+- `pack.target` is `es2022`, the lib the dnt build targeted.
