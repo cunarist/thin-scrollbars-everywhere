@@ -1,6 +1,6 @@
 {
   "name": "thin-scrollbars-everywhere",
-  "version": "0.1.6",
+  "version": "0.2.0",
   "description": "Thin, translucent scrollbars for the document and every shadow root.",
   "keywords": [
     "scrollbar",
