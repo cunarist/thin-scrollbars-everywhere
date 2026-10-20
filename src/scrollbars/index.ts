@@ -30,6 +30,11 @@ function getScrollbarStyle(): CSSStyleSheet {
  */
 const observedRoots = new WeakSet<Document | ShadowRoot>();
 
+/** The native `Element.prototype.attachShadow`, called with an element. */
+interface NativeAttachShadow {
+  attachShadow: (this: Element, init: ShadowRootInit) => ShadowRoot;
+}
+
 /**
  * Whether applyThinScrollbarsEverywhere has run, making repeat calls
  * no-ops so Element.prototype.attachShadow is only patched once.
@@ -88,11 +93,14 @@ export function applyThinScrollbarsEverywhere(): void {
     return;
   }
   installed = true;
-  const attachShadow = Element.prototype.attachShadow;
-  Element.prototype.attachShadow = function (
+  // Read through a function-typed property, so the native method is kept
+  // with the `this` it needs spelled out for the `call` below.
+  const nativePrototype: NativeAttachShadow = Element.prototype;
+  const nativeAttachShadow = nativePrototype.attachShadow;
+  Element.prototype.attachShadow = function attachShadow(
     init: ShadowRootInit,
   ): ShadowRoot {
-    const root = attachShadow.call(this, init);
+    const root = nativeAttachShadow.call(this, init);
     patchRoot(root);
     return root;
   };
