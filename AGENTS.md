@@ -10,10 +10,10 @@ and follow it before reasoning or responding.
 - **thin-scrollbars-everywhere**: a small browser library, published to npm,
   that gives the document and every shadow root thin, translucent
   scrollbars. Its one export is `applyThinScrollbarsEverywhere`, written in
-  `src/index.ts`.
+  `src/scrollbars/index.ts` (alias `#scrollbars`).
 - Built with Vite+ (`vp`): Oxlint, Oxfmt, type checking, Vitest, tsdown.
   The tooling runs on Node.js 22.18+; the package itself runs in browsers.
-- `vp pack` builds `src/index.ts` into `dist/` as ESM (`index.js`) and
+- `vp pack` builds `src/scrollbars/index.ts` into `dist/` as ESM (`index.js`) and
   CommonJS (`index.cjs`) with declarations, the same `import`/`require`
   entry points the earlier Deno dnt build published.
 - `example/` holds hand-run demo pages: `npm run example`.
@@ -38,8 +38,10 @@ and follow it before reasoning or responding.
 - Entry files are `index.ts`. `scripts/` is flat, with no subfolders and no
   `index.ts`. `imports` aliases, if added, point only at direct `src/`
   subfolders; `../` is banned everywhere. See `imports-aliases-barrels`.
-- Unit tests sit next to the code as `*.test.ts` and run in a `happy-dom`
-  document. Regression tests would go in `tests/`. See `tests-layout-vitest`.
+- Tests run in a `happy-dom` document. Unit tests sit next to the code as
+  `*.test.ts`; package-level regression tests sit in `tests/`, one file per
+  topic (`tests/shadow-root-styling.test.ts`, `tests/sheet-restore.test.ts`),
+  importing through `#scrollbars`. See `tests-layout-vitest`.
 - Lint: every Oxlint category except `nursery` is on, plus
   `eslint-plugin-explicit-types` and `eslint-plugin-import-structure` through
   their `all` configs. `vite.config.ts` names no rule; offs and option tweaks

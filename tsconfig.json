@@ -20,6 +20,5 @@
     "noFallthroughCasesInSwitch": true,
     "allowUnreachableCode": false,
     "allowUnusedLabels": false
-  },
-  "include": ["src"]
+  }
 }

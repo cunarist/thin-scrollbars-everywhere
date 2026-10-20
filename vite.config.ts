@@ -40,10 +40,11 @@ export default defineConfig({
       reportUnusedDisableDirectives: "error",
     },
   },
-  // ESM and CommonJS builds of `src/index.ts`, with declarations, as the
-  // earlier dnt build shipped.
+  // ESM and CommonJS builds of `src/scrollbars/index.ts` as `dist/index.*`,
+  // the files package.json "exports" names, with declarations, as the earlier
+  // dnt build shipped.
   pack: {
-    entry: "src/index.ts",
+    entry: { index: "src/scrollbars/index.ts" },
     format: ["esm", "cjs"],
     platform: "neutral",
     target: "es2022",

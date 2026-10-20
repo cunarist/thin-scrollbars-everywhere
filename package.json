@@ -24,6 +24,9 @@
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "imports": {
+    "#scrollbars": "./src/scrollbars/index.ts"
+  },
   "exports": {
     ".": {
       "import": "./dist/index.js",

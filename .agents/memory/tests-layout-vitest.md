@@ -12,7 +12,9 @@ Decided 2026-10-14 for all repos.
   in the tarball.
 - **Regression and integration tests** live in the top-level `tests/` folder and
   import code only through `#` aliases, never `../` paths. No overrides for
-  `tests/`. This repo has none yet; its tests sit in `src/index.test.ts`.
+  `tests/`. Files are named by topic, never `index.test.ts`. This repo's
+  tests are all regression tests: `tests/shadow-root-styling.test.ts` and
+  `tests/sheet-restore.test.ts`, importing `#scrollbars`.
 - **DOM:** `vite.config.ts` sets `test.environment` to `happy-dom`, so tests
   patch a real-enough `Element.prototype` and adopt constructable sheets.
   `vp test tests` runs just these.

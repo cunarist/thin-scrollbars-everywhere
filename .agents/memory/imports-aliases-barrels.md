@@ -77,13 +77,13 @@ Relative imports are written with the `.ts` extension.
 
 ## In this repo
 
-- `src/` holds one module, `src/index.ts`, plus its colocated test, so
-  there are no `imports` aliases yet. `src/index.ts` is the `vp pack` entry.
+- `src/` holds one module, `src/scrollbars/index.ts`, aliased as
+  `#scrollbars`; it is the `vp pack` entry, built as `dist/index.*`. There is
+  no `src/index.ts`. `tests/` and `example/index.html` import `#scrollbars`.
 - `scripts/` (flat, no `index.ts`) and `vite.config.ts` are owned by no
   alias and import their own files by `./` paths.
-- If `src/` grows, move code into direct subfolders with an `index.ts` each
-  and an alias per subfolder, per the convention below; never alias
-  `src/index.ts`.
+- If `src/` grows, add more direct subfolders with an `index.ts` each and
+  an alias per subfolder, per the convention below.
 
 ## Local convention: aliases target direct `src/` subfolders
 

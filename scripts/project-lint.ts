@@ -7,7 +7,7 @@
  * (`project-lint-hugoalh.ts`, `project-lint-hugoalh-types.ts`).
  *
  * Loaded by `vite.config.ts` as an Oxlint `jsPlugins` entry, never packed:
- * `vp pack` builds `src/index.ts` alone and the tarball holds only `dist/`.
+ * `vp pack` builds `src/scrollbars/index.ts` alone and the tarball holds only `dist/`.
  *
  * @module
  */

@@ -1,13 +1,12 @@
+/**
+ * Regression: the document and every shadow root, open or closed, made
+ * before or after the call, adopt the one shared scrollbar sheet exactly
+ * once, and the patched `attachShadow` keeps its name.
+ */
+
 import { expect, it } from "vite-plus/test";
 
-import { applyThinScrollbarsEverywhere } from "./index.ts";
-
-/** Lets the mutation observers deliver their pending records. */
-async function settle(): Promise<void> {
-  await new Promise<void>((resolve) => {
-    queueMicrotask(resolve);
-  });
-}
+import { applyThinScrollbarsEverywhere } from "#scrollbars";
 
 /** The scrollbar sheet a root adopted, read from its CSS text. */
 function hasThinSheet(root: Document | ShadowRoot): boolean {
@@ -35,23 +34,15 @@ it("styles the document and every shadow root", () => {
   expect(hasThinSheet(closedRoot)).toBe(true);
 });
 
-it("keeps the patched method's name", () => {
-  applyThinScrollbarsEverywhere();
-  expect(Element.prototype.attachShadow.name).toBe("attachShadow");
-});
-
-it("puts the sheet back when other code replaces it", async () => {
-  applyThinScrollbarsEverywhere();
-  document.adoptedStyleSheets = [];
-  document.body.append(document.createElement("p"));
-  await settle();
-  expect(hasThinSheet(document)).toBe(true);
-});
-
 it("adopts one shared sheet only once per root", () => {
   applyThinScrollbarsEverywhere();
   applyThinScrollbarsEverywhere();
   const root = document.createElement("div").attachShadow({ mode: "open" });
   expect(root.adoptedStyleSheets).toHaveLength(1);
   expect(root.adoptedStyleSheets[0]).toBe(document.adoptedStyleSheets.at(-1));
+});
+
+it("keeps the patched method's name", () => {
+  applyThinScrollbarsEverywhere();
+  expect(Element.prototype.attachShadow.name).toBe("attachShadow");
 });
