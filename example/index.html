@@ -88,6 +88,15 @@
         border-radius: 10px;
         background: linear-gradient(135deg, #cdd8f5, #f5dfcd);
       }
+      iframe,
+      object {
+        display: block;
+        width: 100%;
+        height: calc(100% - 26px);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: var(--card);
+      }
       .wide {
         width: 100%;
         padding: 14px;
@@ -161,8 +170,8 @@
       <h1>thin-scrollbars-everywhere</h1>
       <p>
         Every scrollable area below uses thin, translucent scrollbars — the page
-        itself, plain divs, and open, closed, late, and declarative shadow
-        roots.
+        itself, plain divs, open, closed, late, and declarative shadow roots,
+        and the framed pages, nested frames, and shadow roots inside those.
       </p>
     </header>
     <main>
@@ -191,6 +200,14 @@
             </div>
           </template>
         </div>
+      </div>
+      <div class="box" style="width: 300px; height: 320px">
+        <p>iframe, and everything inside it</p>
+        <iframe src="./framed.html" title="Framed page"></iframe>
+      </div>
+      <div class="box" style="width: 300px; height: 320px">
+        <p>object, and everything inside it</p>
+        <object data="./framed.html" type="text/html"></object>
       </div>
       <div class="wide">
         <p>Body-level content — long enough to scroll the page itself</p>

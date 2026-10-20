@@ -8,8 +8,8 @@ and follow it before reasoning or responding.
 ## Project
 
 - **thin-scrollbars-everywhere**: a small browser library, published to npm,
-  that gives the document and every shadow root thin, translucent
-  scrollbars. Its one export is `applyThinScrollbarsEverywhere`, written in
+  that gives the document, every shadow root, and every same-origin framed
+  page thin, translucent scrollbars. Its one export is `applyThinScrollbarsEverywhere`, written in
   `src/scrollbars/index.ts` (alias `#scrollbars`).
 - Built with Vite+ (`vp`): Oxlint, Oxfmt, type checking, Vitest, tsdown.
   The tooling runs on Node.js 22.18+; the package itself runs in browsers.

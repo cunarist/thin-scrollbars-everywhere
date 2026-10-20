@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Framed page</title>
+    <style>
+      html {
+        color: #1b1f24;
+        background: #ffffff;
+        color-scheme: light;
+      }
+      @media (prefers-color-scheme: dark) {
+        html {
+          color: #e8eaed;
+          background: #1c1f25;
+          color-scheme: dark;
+        }
+      }
+      body {
+        margin: 0;
+        padding: 12px;
+        font-family: ui-sans-serif, system-ui, sans-serif;
+      }
+      p {
+        margin: 0 0 10px;
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: #6b7280;
+      }
+      .scroller {
+        overflow: auto;
+        height: 70px;
+        border: 1px solid rgb(128 128 128 / 30%);
+        border-radius: 10px;
+      }
+      .filler {
+        width: 150%;
+        height: 240px;
+        border-radius: 8px;
+        background: linear-gradient(135deg, #dce8ff, #ffe8dc);
+      }
+      iframe {
+        width: 100%;
+        height: 110px;
+        border: 1px solid rgb(128 128 128 / 30%);
+        border-radius: 10px;
+      }
+    </style>
+    <!-- No script here on purpose: the outer page reaches in by itself. -->
+  </head>
+  <body>
+    <p>Framed page</p>
+    <div class="scroller">
+      <div class="filler"></div>
+    </div>
+    <p style="margin-top: 10px">Open shadow root inside the framed page</p>
+    <div id="host"></div>
+    <p style="margin-top: 10px">A frame inside the frame</p>
+    <iframe
+      srcdoc="<body style='margin:0;padding:8px;font:12px ui-sans-serif,system-ui,sans-serif'><div style='overflow:auto;height:70px;border:1px solid rgb(128 128 128 / 30%);border-radius:8px'><div style='width:150%;height:240px;background:linear-gradient(135deg,#d8f5df,#cdeff5)'></div></div></body>"
+    ></iframe>
+    <script>
+      const root = document.querySelector("#host").attachShadow({
+        mode: "open",
+      });
+      root.innerHTML = `
+        <div style="overflow: auto; height: 70px; border-radius: 10px;
+          border: 1px solid rgb(128 128 128 / 30%);">
+          <div style="width: 150%; height: 240px; border-radius: 8px;
+            background: linear-gradient(135deg, #dfe4ff, #eef1ff);"></div>
+        </div>
+      `;
+    </script>
+  </body>
+</html>
