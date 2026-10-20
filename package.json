@@ -1,0 +1,51 @@
+{
+  "name": "thin-scrollbars-everywhere",
+  "version": "0.2.0",
+  "description": "Thin, translucent scrollbars for the document, every shadow root, and every framed page.",
+  "keywords": [
+    "scrollbar",
+    "scrollbars",
+    "shadow-dom",
+    "web-components"
+  ],
+  "homepage": "https://github.com/cunarist/thin-scrollbars-everywhere#readme",
+  "bugs": {
+    "url": "https://github.com/cunarist/thin-scrollbars-everywhere/issues"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cunarist/thin-scrollbars-everywhere.git"
+  },
+  "files": [
+    "dist"
+  ],
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "imports": {
+    "#scrollbars": "./src/scrollbars/index.ts"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "scripts": {
+    "example": "vp dev --open /example/"
+  },
+  "devDependencies": {
+    "@eslint/core": "^0.17.0",
+    "@types/node": "^22.20.5",
+    "@typescript-eslint/types": "^8.71.2",
+    "eslint-plugin-explicit-types": "^0.7.2",
+    "eslint-plugin-import-structure": "^0.10.4",
+    "happy-dom": "^21.0.3",
+    "vite-plus": "^1.2.0"
+  },
+  "engines": {
+    "node": ">=22.18"
+  }
+}

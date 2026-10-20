@@ -39,6 +39,20 @@ const patchedPrototypes = new WeakSet<object>();
  */
 const observedRoots = new WeakSet<Document | ShadowRoot>();
 
+/** The native `Element.prototype.attachShadow`, called with an element. */
+interface NativeAttachShadow {
+  attachShadow: (this: Element, init: ShadowRootInit) => ShadowRoot;
+}
+
+/**
+ * The constructors a page's own window holds for its realm.
+ * A sheet or observer built from another realm's constructors is refused.
+ */
+interface PageWindow {
+  CSSStyleSheet: new () => CSSStyleSheet;
+  MutationObserver: new (callback: MutationCallback) => MutationObserver;
+}
+
 /** Frame elements already waited on, so one `load` listener is enough. */
 const watchedFrames = new WeakSet<Element>();
 
@@ -74,7 +88,7 @@ function framedDocumentOf(element: FramedElement): Document | null {
 /** The document a root belongs to, which for a document is itself. */
 function ownerOf(root: Document | ShadowRoot): Document {
   const owner = root.ownerDocument;
-  return owner === null ? root : owner;
+  return owner ?? root;
 }
 
 /** Styles the page a framed element holds, when it holds one in reach. */
@@ -96,7 +110,9 @@ function watchFrame(element: FramedElement): void {
     return;
   }
   watchedFrames.add(element);
-  element.addEventListener("load", () => patchFramedPage(element));
+  element.addEventListener("load", () => {
+    patchFramedPage(element);
+  });
 }
 
 /**
@@ -118,31 +134,22 @@ function patchDescendants(node: Node): void {
   }
 }
 
-/**
- * Adopts the sheet into a root and watches it from then on, so anything
- * grown later is styled and the sheet returns if other code drops it.
- *
- * The owner is read afresh every time rather than remembered, because a
- * host can be moved into another document, and the sheet the old one built
- * is one the new one refuses. A root whose document has no window of its
- * own is left entirely alone, so that it is still waiting the day it is
- * adopted into a document that has one.
- */
-function patchRoot(root: Document | ShadowRoot): void {
-  const owner = ownerOf(root);
-  const view = owner.defaultView;
-  if (view === null) {
-    return;
-  }
+/** The sheet a document lends its roots, built the first time it is asked. */
+function sheetOf(owner: Document, view: PageWindow): CSSStyleSheet {
   let sheet = documentSheets.get(owner);
   if (sheet === undefined) {
     sheet = new view.CSSStyleSheet();
     sheet.replaceSync(SCROLLBAR_RULE);
     documentSheets.set(owner, sheet);
   }
-  if (!root.adoptedStyleSheets.includes(sheet)) {
-    root.adoptedStyleSheets = [...root.adoptedStyleSheets, sheet];
-  }
+  return sheet;
+}
+
+/**
+ * Watches a root once, restyling it and every node it grows from then on,
+ * then styles what it already holds.
+ */
+function observeRoot(root: Document | ShadowRoot, view: PageWindow): void {
   if (observedRoots.has(root)) {
     return;
   }
@@ -160,6 +167,29 @@ function patchRoot(root: Document | ShadowRoot): void {
 }
 
 /**
+ * Adopts the sheet into a root and watches it from then on, so anything
+ * grown later is styled and the sheet returns if other code drops it.
+ *
+ * The owner is read afresh every time rather than remembered, because a
+ * host can be moved into another document, and the sheet the old one built
+ * is one the new one refuses. A root whose document has no window of its
+ * own is left entirely alone, so that it is still waiting the day it is
+ * adopted into a document that has one.
+ */
+function patchRoot(root: Document | ShadowRoot): void {
+  const owner = ownerOf(root);
+  const view = owner.defaultView;
+  if (view === null) {
+    return;
+  }
+  const sheet = sheetOf(owner, view);
+  if (!root.adoptedStyleSheets.includes(sheet)) {
+    root.adoptedStyleSheets = [...root.adoptedStyleSheets, sheet];
+  }
+  observeRoot(root, view);
+}
+
+/**
  * Styles a whole page: its document, its roots, and the roots it grows
  * from here on. Every realm patches its own `attachShadow`, because an
  * `Element.prototype` is that realm's alone and the patch made in one
@@ -170,9 +200,14 @@ function patchPage(target: Document): void {
   if (view !== null && !patchedPrototypes.has(view.Element.prototype)) {
     const prototype = view.Element.prototype;
     patchedPrototypes.add(prototype);
-    const attachShadow = prototype.attachShadow;
-    prototype.attachShadow = function (init: ShadowRootInit): ShadowRoot {
-      const root = attachShadow.call(this, init);
+    // Read through a function-typed property, so the native method is kept
+    // with the `this` it needs spelled out for the `call` below.
+    const nativePrototype: NativeAttachShadow = prototype;
+    const nativeAttachShadow = nativePrototype.attachShadow;
+    prototype.attachShadow = function attachShadow(
+      init: ShadowRootInit,
+    ): ShadowRoot {
+      const root = nativeAttachShadow.call(this, init);
       patchRoot(root);
       return root;
     };
