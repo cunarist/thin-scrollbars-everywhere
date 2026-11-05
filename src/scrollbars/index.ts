@@ -86,9 +86,17 @@ function patchRoot(root: Document | ShadowRoot): void {
  * later are styled too. Closed shadow roots that already exist at call
  * time cannot be reached, so call this as early as possible. An iframe
  * is a separate page with its own realm; call this inside it. Calling
- * it more than once has no further effect.
+ * it more than once has no further effect. Does nothing where the
+ * browser lacks `scrollbar-width`, as WebKit before 18.2 does.
  */
 export function applyThinScrollbarsEverywhere(): void {
+  // The sheet has no effect without `scrollbar-width`, so patching would be
+  // pure risk: on the WebKit of Safari 16.6 it left Lit's shadow roots
+  // without their own sheets. Checked here, not at module level, because
+  // `CSS` does not exist where this module is only imported, such as SSR.
+  if (!CSS.supports("scrollbar-width", "thin")) {
+    return;
+  }
   if (installed) {
     return;
   }

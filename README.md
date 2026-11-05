@@ -38,3 +38,6 @@ A shared constructable stylesheet sets `scrollbar-width: thin` and a
 document and by every shadow root, found through a patched
 `Element.prototype.attachShadow` plus mutation observers that catch roots
 created before the call or attached inside other roots.
+
+Where the browser lacks `scrollbar-width`, as WebKit before 18.2 does, the sheet
+would have no effect, so the call does nothing and patches nothing.
